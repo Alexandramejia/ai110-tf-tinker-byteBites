@@ -12,10 +12,37 @@ class MenuItem:
         self.popularity_rating = popularity_rating  # 0.0 – 5.0
 
 
+# --- MenuItem helper functions ---
+
+def filter_by_category(items: list, category: str) -> list:
+    # returns only items whose category matches the given string
+    return [item for item in items if item.category == category]
+
+def filter_by_max_price(items: list, max_price: float) -> list:
+    # returns only items priced at or below max_price
+    return [item for item in items if item.price <= max_price]
+
+def sort_by_price(items: list, ascending: bool = True) -> list:
+    # returns items sorted by price, lowest-first by default
+    return sorted(items, key=lambda item: item.price, reverse=not ascending)
+
+def sort_by_popularity(items: list, ascending: bool = False) -> list:
+    # returns items sorted by popularity_rating, highest-first by default
+    return sorted(items, key=lambda item: item.popularity_rating, reverse=not ascending)
+
+
 class Customer:
     def __init__(self, name: str):
         self.name = name
         self.purchase_history = []  # list of Order objects
+
+    def total_spent(self) -> float:
+        # sums the total cost across all orders in purchase_history
+        return sum(order.total() for order in self.purchase_history)
+
+    def order_count(self) -> int:
+        # returns how many orders the customer has placed
+        return len(self.purchase_history)
 
 
 class Order:
@@ -24,7 +51,8 @@ class Order:
         self.items = {}  # {MenuItem: quantity}
 
     def add_item(self, item, quantity: int = 1):
-        self.items[item] = self.items.get(item, 0) + quantity
+        if quantity > 0:
+            self.items[item] = self.items.get(item, 0) + quantity
 
     def remove_item(self, item):
         if item in self.items:
@@ -44,7 +72,8 @@ class Payment:
     def get_receipt(self) -> str:
         lines = []
         for item, qty in self.order.items.items():
-            lines.append(f"{item.name} x{qty}")
+            lines.append(f"{item.name} x{qty}  ${item.price * qty:.2f}")
         lines.append(f"Total: ${self.order.total():.2f}")
+        lines.append(f"Paid: ${self.amount:.2f} via {self.method}")
         lines.append(f"Status: {'Approved' if self.success else 'Declined'}")
         return "\n".join(lines)
